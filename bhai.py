@@ -1,4 +1,8 @@
 # Imports
+"""
+Importing every third party and standard module that is used throughout the entire module.
+DON'T CHANGE ANY CODE FROM THIS SECTION.
+"""
 import pyttsx3
 import datetime
 import speech_recognition as sr
@@ -21,9 +25,17 @@ import time
 
 
 
+
 # Initializations
+"""
+This section contains every initializations and constant values that is used throughout the entire module.
+Change them according to your device settings.
+ANS_QUES_MAP is a dictionary containg key-value pairs which represents answers and questions of basic conversation.
+Increase the key-value pairs to make the assistant more interactive.
+"""
+
 engine = pyttsx3.init("sapi5")
-voices = engine.getProperty("voices")
+voices = engine.getProperty("voices")  # Haven't found any native Bengali voice for microsoft sapi5 engine :(
 engine.setProperty("voice", voices[0].id)
 
 MUSIC_DIR = "C:\\Users\\ahamm\\Music"
@@ -55,12 +67,12 @@ MATH_SYMBOLS_MAPPING = {
 STUFF_BHAI_CAN_DO = "I can do a lot of stuffs. I can continue a basic conversation with you. " + \
                     "My other capabilities include: " + \
                     "Providing system report, weather report, and network report. " + \
-                    "Telling current time. " + \
-                    "Perform Dynamic news searching. " + \
+                    "Telling the current time and todays date. " + \
+                    "Performing Dynamic news searching. " + \
                     "Opening Web Browser, Visual Studio Code, Calculator, and Office Softwares like Word, Powerpoint, Excel. " + \
                     "Searching on Google, Youtube and Wikipedia. " + \
                     "Opening Facebook, LinkedIn and Gmail. " + \
-                    "Capturing your selfie. " + \
+                    "Capturing your selfie or a screenshot. " + \
                     "Telling you jokes. " + \
                     "Sending Messages to your Facebook Friends. " + \
                     "Sending Emails. " + \
@@ -78,19 +90,28 @@ ANS_QUES_MAP = {
         "I am your bhai": ["who are you", "what is your identity", "what is your name"],
         "Ahammad Shawki has created me": ["who made you", "who created you", "who is your creator"],
         "Welcome": ["thanks", "thank you"],
+        "Thank you": ["nice", "great", "good", "wonderful"],
         "Should I tell you a joke or play any music for you?": ["my mood is off", "i am not feeling great"],
         STUFF_BHAI_CAN_DO : ["tell me what can you do", "what can you do", "which tasks you can perform"],
     }
 
 
 
+
 # Functions
 def speak(audio):
+    """
+    Speaks a sentence.
+    Param - audio (string)
+    """
     engine.say(audio)
     engine.runAndWait()
 
 
 def wishMe():
+    """
+    Wish the user according to current time.
+    """
     hour = int(datetime.datetime.now().hour)
     if hour >= 0 and hour < 12:
         speak("Good Morning!")
@@ -103,6 +124,10 @@ def wishMe():
      
 
 def takeCommand(lang = "en-in"):
+    """
+    Listen for command speech and after recognizing, transforms it into a string.
+    Param - lang (language of the command speech). Default vaule is set to 'en-in'.
+    """
     rec = sr.Recognizer()
     with sr.Microphone() as source:
         print("Listening....")
@@ -121,7 +146,13 @@ def takeCommand(lang = "en-in"):
 
 
 def sendEmail(to, content):
-    # enable less secure apps
+    """
+    Send emails.
+    Param - to (to email address)
+          - content (email body)
+
+    YOU HAVE TO TURN ON LESS SECURE APPS SETTINGS IN GMAIL TO USE THIS FUNCTION.
+    """
     server = smtplib.SMTP("smtp.gmail.com", 587)
     server.ehlo()
     server.starttls()
@@ -131,6 +162,12 @@ def sendEmail(to, content):
 
 
 def systemReport():
+    """
+    Provide a basic system report which includes
+    - battery percentage
+    - battery plugged status
+    - total number of running processes
+    """
     battery = psutil.sensors_battery()
     percent = battery.percent
     plugged = "plugged in" if battery.power_plugged else "not plugged in"
@@ -141,6 +178,16 @@ def systemReport():
     
 
 def weatherReport(CITY, API_KEY):
+    """
+    Fetch data from the weather api and provide a weather report which includes - 
+    - temprature
+    - humidity
+    - pressure
+    - weather condition
+
+    Param - CITY (location city)
+          - API_KEY (your unique weather api key) Collect it from 'https://api.openweathermap.org/'
+    """
     BASE_URL = "https://api.openweathermap.org/data/2.5/weather?"
     URL = BASE_URL + "q=" + CITY + "&appid=" + API_KEY
     
@@ -162,6 +209,12 @@ def weatherReport(CITY, API_KEY):
 
 
 def networkReport():
+    """
+    Provide the network status of your device which includes
+    - ping
+    - upling
+    - downling
+    """
     st = speedtest.Speedtest()
     try:
         speak("Creating Network Report...")
@@ -185,7 +238,10 @@ def networkReport():
 
 
 def newsReport():
-    # Can't find rss for Bangladeshi Newspapers
+    """
+    Fetch data from google news api and Tell the daily top 5 news.
+    Haven't found any rss feed for Bangladeshi Newspapers :(
+    """
     try:
         news_url = "https://news.google.com/news/rss"
         client = urllib.request.urlopen(news_url)
@@ -204,6 +260,12 @@ def newsReport():
 
 
 def sendMessage():
+    """
+    Log in to your FB account.
+    Ask for your friends name.
+    Ask for the message you want to send.
+    Send the message in messenger.
+    """
     client = fbchat.Client(FB_USERNAME, FB_PASS)
     friend_name = input("Enter your friends username: ")
     friends = client.searchForUsers(friend_name)
@@ -213,13 +275,17 @@ def sendMessage():
     print("User's profile picture URL: {}".format(friend.photo))
     print("User's main URL: {}".format(friend.url))
     speak("What will be your message?")
-    msg = takeCommand("bn")
+    msg = takeCommand("bn") # Language set to Bengali("bn"). For change it back, just remove the attribute.
     sent = client.sendMessage(msg, thread_id=friend.uid)
     if sent:
         print("Message sent successfully!")
 
 
 def googleSearch(query):
+    """
+    Open web browser and perform a google search.
+    Param - query
+    """
     if query.startswith("google search "):
         query = query.replace("google search ", "")
     keyword_list = query.split(" ")
@@ -228,6 +294,10 @@ def googleSearch(query):
 
 
 def youtubeSearch(query):
+    """
+    Open web browser and perform a youtube search.
+    Param - query
+    """
     if query.startswith("youtube search "):
         query = query.replace("youtube search ", "")
     if query.startswith("search on youtube "):
@@ -238,39 +308,55 @@ def youtubeSearch(query):
 
 
 def replace_words_with_numbers(transcript):
-        transcript_with_numbers = ""
-        for word in transcript.split():
-            try:
-                number = w2n.word_to_num(word)
-                transcript_with_numbers += " " + str(number)
-            except ValueError as e:
-                transcript_with_numbers += " " + word
-        return transcript_with_numbers
+    """
+    Detect possible words from the transcript and change it to a number.
+    Incase of ValueError add the word as it was before.
+
+    Param - transcript
+    """
+    transcript_with_numbers = ""
+    for word in transcript.split():
+        try:
+            number = w2n.word_to_num(word)
+            transcript_with_numbers += " " + str(number)
+        except ValueError as e:
+            transcript_with_numbers += " " + word
+    return transcript_with_numbers
 
 
 def clear_transcript(transcript):
-        """
-        Keep in transcript only numbers and operators
-        """
-        cleaned_transcript = ""
-        for word in transcript.split():
-            if word.isdigit() or word in MATH_SYMBOLS_MAPPING.values():
-                # Add numbers
-                cleaned_transcript += word
-            else:
-                # Add operators
-                cleaned_transcript += MATH_SYMBOLS_MAPPING.get(word, "")
-        return cleaned_transcript
+    """
+    Keep in transcript only numbers and operators
+    """
+    cleaned_transcript = ""
+    for word in transcript.split():
+        if word.isdigit() or word in MATH_SYMBOLS_MAPPING.values():
+            # Add numbers
+            cleaned_transcript += word
+        else:
+            # Add operators
+            cleaned_transcript += MATH_SYMBOLS_MAPPING.get(word, "")
+    return cleaned_transcript
 
 
 def do_calculations(voice_transcript, **kwargs):
-        transcript_with_numbers = replace_words_with_numbers(voice_transcript)
-        math_equation = clear_transcript(transcript_with_numbers)
-        try:
-            result = str(eval(math_equation))
-            speak(f"The asnwer of your math equation is {result}.")
-        except Exception as e:
-            print('Failed to eval the equation --> {0} with error message {1}'.format(math_equation, e))
+    """
+    Perform basic calculations like -
+    - One plus two
+    - three into twenty
+    - five power two
+    - ten minus nine
+    - twelve divide four
+
+    Param - voice_transcript
+    """
+    transcript_with_numbers = replace_words_with_numbers(voice_transcript)
+    math_equation = clear_transcript(transcript_with_numbers)
+    try:
+        result = str(eval(math_equation))
+        speak(f"The answer of your math equation is {result}.")
+    except Exception as e:
+        print('Failed to eval the equation --> {0} with error message {1}'.format(math_equation, e))
 
 
 
@@ -280,11 +366,13 @@ if __name__ == "__main__":
     while True:
         query = takeCommand().lower()
 
+        # basic conversation
         for key, value in ANS_QUES_MAP.items():
             if query in value:
                 speak(key)
                 break 
         
+        # reports
         if 'system report' in query:
             speak(systemReport())
 
@@ -300,6 +388,16 @@ if __name__ == "__main__":
         elif "joke" in query:
             speak(pyjokes.get_joke())
         
+        # time and date
+        elif "time" in query:
+            strTime = datetime.datetime.now().strftime("%H:%M:%S")
+            speak(f"The time is {strTime}.")
+
+        elif "date" in query:
+            strDate = datetime.datetime.now().strftime("%d %B of the year %Y")
+            speak(f"Todays' date is {strDate}.")
+        
+        # searching
         elif 'wikipedia' in query:
             speak("Searching Wikipedia...")
             query = query.replace("wikipedia", "")
@@ -314,6 +412,7 @@ if __name__ == "__main__":
         elif "youtube search" in query or "search on youtube" in query:
             youtubeSearch(query)
 
+        # opening in web browser
         elif "open youtube" in query:
             webbrowser.open("youtube.com")
 
@@ -329,6 +428,7 @@ if __name__ == "__main__":
         elif "open gmail" in query:
             webbrowser.open("gmail.com")
 
+        # music options
         elif "play music" in query:
             songs = os.listdir(MUSIC_DIR)
             os.startfile(os.path.join(MUSIC_DIR, songs[0]))
@@ -368,10 +468,7 @@ if __name__ == "__main__":
             except Exception as e:
                 speak("Sorry movie doesn't exist.")
 
-        elif "time" in query:
-            strTime = datetime.datetime.now().strftime("%H:%M:%S")
-            speak(f"Bhai The time is {strTime}.")
-
+        # opening native applications
         elif "visual studio" in query:
             os.startfile(CODE_PATH)
 
@@ -390,15 +487,21 @@ if __name__ == "__main__":
         elif "browser" in query or "edge" in query:
             os.startfile(EDGE_PATH)
 
+        # capturing
         elif "selfie" in query:
+            time.sleep(1)
             cam = cv2.VideoCapture(0)
             result, image = cam.read()
             if result:
                 cv2.imwrite("selfie.jpg", image)
                 os.startfile("selfie.jpg")
-                cv2.waitKey(1000)
-                cv2.destroyWindow("selfie")
+
+        elif "screenshot" in query:
+            img = pyautogui.screenshot()
+            img.save("screenshot.jpg")
+            os.startfile("screenshot.jpg")
         
+        # message and email
         elif "message" in query:
             sendMessage()
 
@@ -414,8 +517,22 @@ if __name__ == "__main__":
                 print(e)
                 speak("Sorry. I cant send the email at this moment.")
 
+        # change voice
+        elif "voice" in query:
+            if 'female' in query:
+                engine.setProperty('voice', voices[1].id)
+            else:
+                engine.setProperty('voice', voices[0].id)
+            speak("I have switched my voice. How is it?")
+
+        # ending the loop and putting bhai to sleep
         elif "sleep" in query:
             break
 
         else:
             do_calculations(query)
+            """
+            THERE IS NO UNIQUE WAY TO DETECT THIS FUNCTION CALL. 
+            SO IT WILL ALWAYS RUN IF NO OTHER FUNCTION HAS BEEN CALLED.
+            THUS IT MAY RAISE AN EXCEPTION FREQUENTLY. JUST IGNORE IT.
+            """
