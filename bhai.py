@@ -89,7 +89,7 @@ ANS_QUES_MAP = {
         "It is nice to hear bhai.": ["fine", "I am also fine", "I am well", "fine thank you", "i am doing well", "pretty good"],
         "I am your bhai": ["who are you", "what is your identity", "what is your name"],
         "Ahammad Shawki has created me": ["who made you", "who created you", "who is your creator"],
-        "Welcome": ["thanks", "thank you"],
+        "You are welcome": ["thanks", "thank you"],
         "Thank you": ["nice", "great", "good", "wonderful"],
         "Should I tell you a joke or play any music for you?": ["my mood is off", "i am not feeling great"],
         STUFF_BHAI_CAN_DO : ["tell me what can you do", "what can you do", "which tasks you can perform"],
@@ -168,13 +168,14 @@ def systemReport():
     - battery plugged status
     - total number of running processes
     """
+    speak("Generating system report...")
     battery = psutil.sensors_battery()
     percent = battery.percent
     plugged = "plugged in" if battery.power_plugged else "not plugged in"
     
     inst = wmi.WMI()
     num_process = len(inst.Win32_Process())
-    return f"All systems are at 100 percent. Battery percentage: {percent} percent. Battery state: {plugged}. {num_process} processes are currently running."
+    speak(f"All systems are at 100 percent. Battery percentage: {percent} percent. Battery state: {plugged}. {num_process} processes are currently running.")
     
 
 def weatherReport(CITY, API_KEY):
@@ -190,7 +191,8 @@ def weatherReport(CITY, API_KEY):
     """
     BASE_URL = "https://api.openweathermap.org/data/2.5/weather?"
     URL = BASE_URL + "q=" + CITY + "&appid=" + API_KEY
-    
+    speak("Generating weather report...")
+
     response = requests.get(URL)
     if response.status_code == 200:
         data = response.json()
@@ -217,7 +219,7 @@ def networkReport():
     """
     st = speedtest.Speedtest()
     try:
-        speak("Creating Network Report...")
+        speak("Performing speedtest and generating Network Report...")
         server_names = []
         st.get_servers(server_names)
 
@@ -242,6 +244,7 @@ def newsReport():
     Fetch data from google news api and Tell the daily top 5 news.
     Haven't found any rss feed for Bangladeshi Newspapers :(
     """
+    speak("Fetching dynamic news report data ...")
     try:
         news_url = "https://news.google.com/news/rss"
         client = urllib.request.urlopen(news_url)
@@ -266,7 +269,9 @@ def sendMessage():
     Ask for the message you want to send.
     Send the message in messenger.
     """
+    speak("Logging in to Facebook...")
     client = fbchat.Client(FB_USERNAME, FB_PASS)
+    speak("Enter your friends username..")
     friend_name = input("Enter your friends username: ")
     friends = client.searchForUsers(friend_name)
     friend = friends[0]
@@ -278,7 +283,7 @@ def sendMessage():
     msg = takeCommand("bn") # Language set to Bengali("bn"). For change it back, just remove the attribute.
     sent = client.sendMessage(msg, thread_id=friend.uid)
     if sent:
-        print("Message sent successfully!")
+        speak("Message sent successfully!")
 
 
 def googleSearch(query):
@@ -374,7 +379,7 @@ if __name__ == "__main__":
         
         # reports
         if 'system report' in query:
-            speak(systemReport())
+            systemReport()
 
         elif "weather" in query:
             weatherReport(LOCATION, WEATHER_API_KEY)
@@ -407,53 +412,73 @@ if __name__ == "__main__":
             speak(results)
         
         elif "what is" in query or "google" in query:
+            speak("Searching on Google..")
             googleSearch(query)
 
         elif "youtube search" in query or "search on youtube" in query:
+            speak("Searching on Youtube..")
             youtubeSearch(query)
 
         # opening in web browser
         elif "open youtube" in query:
+            speak("Opening Youtube..")
             webbrowser.open("youtube.com")
 
         elif "open google" in query:
+            speak("Opening Google..")
             webbrowser.open("google.com")
 
         elif "open facebook" in query:
+            speak("Opening Facebook..")
             webbrowser.open("facebook.com")
+
+        elif "open messenger" in query:
+            speak("Opening Messenger..")
+            webbrowser.open("messenger.com")
         
         elif "open linkedin" in query:
+            speak("Opening LinkedIn..")
             webbrowser.open("linkedin.com")
 
         elif "open gmail" in query:
+            speak("Opening Gmail..")
             webbrowser.open("gmail.com")
 
         # music options
         elif "play music" in query:
+            speak("Playing Music..")
             songs = os.listdir(MUSIC_DIR)
             os.startfile(os.path.join(MUSIC_DIR, songs[0]))
 
         elif "volume up" in query:
             pyautogui.press("volumeup", presses = 10)
+            speak("Volume increased 20%")
 
         elif "volume down" in query:
             pyautogui.press("volumedown", presses = 10)
+            speak("Volume decreased 20%")
 
         elif "mute" in query:
             pyautogui.press("volumemute")
+            speak("Volume unmuted")
 
         elif "stop" in query or "resume" in query:
             pyautogui.press("playpause")
+            speak("Done")
 
         elif "next" in query:
+            speak("Forwarding to the next track..")
             pyautogui.press("nexttrack")
 
         elif "previous" in query:
+            speak("Backwording to the previous track..")
             pyautogui.press("prevtrack")
 
         elif "close" in query:
             pyautogui.keyDown('alt')
             pyautogui.press("f4")
+            speak("Window closed")
+            pyautogui.keyUp('alt')
 
         elif "movie" in query:
             print(os.listdir(MOVIE_DIR))
@@ -465,23 +490,29 @@ if __name__ == "__main__":
                 for movie in os.listdir(MOVIE_DIR):
                     if movie_name in movie:
                         os.startfile(os.path.join(MOVIE_DIR, movie))
+                        speak("Movie has started. Grab your popcorn.")
             except Exception as e:
                 speak("Sorry movie doesn't exist.")
 
         # opening native applications
         elif "visual studio" in query:
+            speak("Opening visual studio code..")
             os.startfile(CODE_PATH)
 
         elif "open calculator" in query:
+            speak("Opening calculator..")
             os.system("calc.exe")
 
         elif "open word" in query:
+            speak("Opening Microsoft word..")
             os.startfile(WORD_PATH)
 
         elif "open powerpoint" in query:
+            speak("Opening microsoft powerpoint..")
             os.startfile(PP_PATH)
 
         elif "open excel" in query:
+            speak("Opening microsoft excel..")
             os.startfile(EXCEL_PATH)
 
         elif "browser" in query or "edge" in query:
@@ -489,6 +520,7 @@ if __name__ == "__main__":
 
         # capturing
         elif "selfie" in query:
+            speak("Say cheese..")
             time.sleep(1)
             cam = cv2.VideoCapture(0)
             result, image = cam.read()
@@ -499,6 +531,7 @@ if __name__ == "__main__":
         elif "screenshot" in query:
             img = pyautogui.screenshot()
             img.save("screenshot.jpg")
+            speak("Screenshot captured..")
             os.startfile("screenshot.jpg")
         
         # message and email
@@ -527,6 +560,7 @@ if __name__ == "__main__":
 
         # ending the loop and putting bhai to sleep
         elif "sleep" in query:
+            speak("Maybe it is goodbye for us..")
             break
 
         else:
