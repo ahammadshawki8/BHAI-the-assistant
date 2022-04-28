@@ -11,9 +11,13 @@ import psutil
 import wmi
 import requests
 import pyjokes
-import time
+import speedtest
+import urllib
+from bs4 import BeautifulSoup as bs
 import fbchat
 import cv2
+from word2number import w2n
+import time
 
 
 
@@ -29,6 +33,7 @@ OFFICE_PATH = "C:\\Program Files (x86)\\Microsoft Office\\root\\Office16"
 WORD_PATH = os.path.join(OFFICE_PATH, "WINWORD.EXE")
 PP_PATH = os.path.join(OFFICE_PATH, "POWERPNT.EXE")
 EXCEL_PATH = os.path.join(OFFICE_PATH, "EXCEL.EXE")
+EDGE_PATH = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"
 MY_EMAIL = "ahammadshawki8@gmail.com"
 MY_PASSWORD = os.environ.get("EMAIL_PASS")
 EMAIL_ADDRESS = {"shawki":"ahammadshawki8@gmail.com", "organisation":"team.as8.org@gmail.com"}
@@ -37,10 +42,21 @@ WEATHER_API_KEY = os.environ.get("WEATHER_API")
 FB_USERNAME = "ahammadshawki8"
 FB_PASS = os.environ.get("FB_PASS")
 
+MATH_SYMBOLS_MAPPING = {
+    "equal": "=",
+    "plus": "+",
+    "minus": "-",
+    "into": "*",
+    "divide": "/",
+    "modulo": "mod",
+    "power": "**",
+}
+
 STUFF_BHAI_CAN_DO = "I can do a lot of stuffs. I can continue a basic conversation with you. " + \
                     "My other capabilities include: " + \
-                    "Providing system report and weather report. " + \
+                    "Providing system report, weather report, and network report. " + \
                     "Telling current time. " + \
+                    "Perform Dynamic news searching. " + \
                     "Opening Web Browser, Visual Studio Code, Calculator, and Office Softwares like Word, Powerpoint, Excel. " + \
                     "Searching on Google, Youtube and Wikipedia. " + \
                     "Opening Facebook, LinkedIn and Gmail. " + \
@@ -49,20 +65,21 @@ STUFF_BHAI_CAN_DO = "I can do a lot of stuffs. I can continue a basic conversati
                     "Sending Messages to your Facebook Friends. " + \
                     "Sending Emails. " + \
                     "Play Music. " + \
-                    "Pause, Resume the current track or move to next/previous track. " + \
+                    "Pause or Resume the current track or move to next/previous track. " + \
                     "Start a movie for you. " + \
                     "Increase or decrease system output volume. " + \
                     "Do basic calculation. " + \
                     "And finally sleep when I am done."
 
 ANS_QUES_MAP = {
-        "Hello Bhai": ["hello", "hi", "hey"],
+        "Hello Bhai": ["hello", "hi", "hey", "hello there"],
         "I am Fine Bhai. What about you?": ["how are you", "how are you doing"],
-        "It is nice to hear bhai.": ["fine thank you", "i am doing well", "pretty good"],
+        "It is nice to hear bhai.": ["fine", "I am also fine", "I am well", "fine thank you", "i am doing well", "pretty good"],
         "I am your bhai": ["who are you", "what is your identity", "what is your name"],
         "Ahammad Shawki has created me": ["who made you", "who created you", "who is your creator"],
         "Welcome": ["thanks", "thank you"],
-        STUFF_BHAI_CAN_DO : ["tell me what can you do", "What can you do", "which tasks you can perform"],
+        "Should I tell you a joke or play any music for you?": ["my mood is off", "i am not feeling great"],
+        STUFF_BHAI_CAN_DO : ["tell me what can you do", "what can you do", "which tasks you can perform"],
     }
 
 
@@ -82,7 +99,7 @@ def wishMe():
     else:
         speak("Good Evening!")
 
-    speak("What can I do for you?")
+    speak("How can I help you?")
      
 
 def takeCommand(lang = "en-in"):
@@ -130,22 +147,64 @@ def weatherReport(CITY, API_KEY):
     response = requests.get(URL)
     if response.status_code == 200:
         data = response.json()
-        main = data['main']
-        temperature = main['temp']
-        humidity = main['humidity']
-        pressure = main['pressure']
-        report = data['weather']
+        main = data["main"]
+        temperature = main["temp"]
+        humidity = main["humidity"]
+        pressure = main["pressure"]
+        report = data["weather"]
         speak(f"Weather Report of Dhaka")
-        speak(f"Temperature: {temperature}")
-        speak(f"Humidity: {humidity}")
-        speak(f"Pressure: {pressure}")
-        speak(f"Weather Condition: {report[0]['description']}")
+        speak(f"The Temperature is: {temperature}")
+        speak(f"The Humidity is: {humidity}")
+        speak(f"The Pressure is: {pressure}")
+        speak(f"The Weather Condition is: {report[0]['description']}")
     else:
         print("Error in the HTTP request")
 
 
+def networkReport():
+    st = speedtest.Speedtest()
+    try:
+        speak("Creating Network Report...")
+        server_names = []
+        st.get_servers(server_names)
+
+        downlink_bps = st.download()
+        uplink_bps = st.upload()
+        ping = st.results.ping
+        up_mbps = uplink_bps / 1000000
+        down_mbps = downlink_bps / 1000000
+
+        speak("Speedtest results:\n"
+            "The ping is: %s ms \n"
+            "The upling is: %0.2f Mbps \n"
+            "The downling is: %0.2f Mbps" % (ping, up_mbps, down_mbps)
+            )
+
+    except Exception as e:
+        speak("Sorry, I coudn't run a speedtest")
+
+
+def newsReport():
+    # Can't find rss for Bangladeshi Newspapers
+    try:
+        news_url = "https://news.google.com/news/rss"
+        client = urllib.request.urlopen(news_url)
+        xml_page = client.read()
+        client.close()
+        soup = bs(xml_page, "xml")
+        news_list = soup.findAll("item")
+        response = ""
+        for news in news_list[:5]:
+            data = news.title.text.encode("utf-8")
+            response += data.decode()
+        speak(response)
+    except Exception as e:
+        print(e)
+        speak("I can't find about daily news..")
+
+
 def sendMessage():
-    client = fbchat.Client(FB_USERNAME, "as8@@@facebook")
+    client = fbchat.Client(FB_USERNAME, FB_PASS)
     friend_name = input("Enter your friends username: ")
     friends = client.searchForUsers(friend_name)
     friend = friends[0]
@@ -159,6 +218,59 @@ def sendMessage():
     if sent:
         print("Message sent successfully!")
 
+
+def googleSearch(query):
+    if query.startswith("google search "):
+        query = query.replace("google search ", "")
+    keyword_list = query.split(" ")
+    new_query = "+".join(keyword_list)
+    webbrowser.open(f"https://www.google.com/search?q={new_query}")
+
+
+def youtubeSearch(query):
+    if query.startswith("youtube search "):
+        query = query.replace("youtube search ", "")
+    if query.startswith("search on youtube "):
+        query = query.replace("search on youtube ", "")
+    keyword_list = query.split(" ")
+    new_query = "+".join(keyword_list)
+    webbrowser.open(f"https://www.youtube.com/results?search_query={new_query}")
+
+
+def replace_words_with_numbers(transcript):
+        transcript_with_numbers = ""
+        for word in transcript.split():
+            try:
+                number = w2n.word_to_num(word)
+                transcript_with_numbers += " " + str(number)
+            except ValueError as e:
+                transcript_with_numbers += " " + word
+        return transcript_with_numbers
+
+
+def clear_transcript(transcript):
+        """
+        Keep in transcript only numbers and operators
+        """
+        cleaned_transcript = ""
+        for word in transcript.split():
+            if word.isdigit() or word in MATH_SYMBOLS_MAPPING.values():
+                # Add numbers
+                cleaned_transcript += word
+            else:
+                # Add operators
+                cleaned_transcript += MATH_SYMBOLS_MAPPING.get(word, "")
+        return cleaned_transcript
+
+
+def do_calculations(voice_transcript, **kwargs):
+        transcript_with_numbers = replace_words_with_numbers(voice_transcript)
+        math_equation = clear_transcript(transcript_with_numbers)
+        try:
+            result = str(eval(math_equation))
+            speak(f"The asnwer of your math equation is {result}.")
+        except Exception as e:
+            print('Failed to eval the equation --> {0} with error message {1}'.format(math_equation, e))
 
 
 
@@ -179,6 +291,12 @@ if __name__ == "__main__":
         elif "weather" in query:
             weatherReport(LOCATION, WEATHER_API_KEY)
 
+        elif "network report" in query or "internet speed" in query or "speed test" in query:
+            networkReport()
+
+        elif "news" in query:
+            newsReport()
+
         elif "joke" in query:
             speak(pyjokes.get_joke())
         
@@ -189,6 +307,12 @@ if __name__ == "__main__":
             speak("According to Wikipedia")
             print(results)
             speak(results)
+        
+        elif "what is" in query or "google" in query:
+            googleSearch(query)
+
+        elif "youtube search" in query or "search on youtube" in query:
+            youtubeSearch(query)
 
         elif "open youtube" in query:
             webbrowser.open("youtube.com")
@@ -263,6 +387,9 @@ if __name__ == "__main__":
         elif "open excel" in query:
             os.startfile(EXCEL_PATH)
 
+        elif "browser" in query or "edge" in query:
+            os.startfile(EDGE_PATH)
+
         elif "selfie" in query:
             cam = cv2.VideoCapture(0)
             result, image = cam.read()
@@ -274,16 +401,6 @@ if __name__ == "__main__":
         
         elif "message" in query:
             sendMessage()
-        
-
-
-        # youtube searching
-        # googling
-        # google map searching
-        # dynamic news reporting
-        # switch brower windows
-        # close browser windows
-        # do basic calculation
 
         elif "email" in query:
             try:
@@ -299,3 +416,6 @@ if __name__ == "__main__":
 
         elif "sleep" in query:
             break
+
+        else:
+            do_calculations(query)
